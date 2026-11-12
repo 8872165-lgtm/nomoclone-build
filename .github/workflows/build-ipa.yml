@@ -1,4 +1,4 @@
-﻿name: build-ipa
+name: build-ipa
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15-intel
+    runs-on: macos-26-intel
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +17,7 @@ jobs:
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-version
           sw_vers
+          uname -m
 
       - name: Install xcodegen
         run: |
@@ -41,7 +42,6 @@ jobs:
             ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             CODE_SIGN_ENTITLEMENTS="" \
-            ENABLE_BITCODE=NO \
             build 2>&1 | tee xcodebuild.log
 
       - name: Verify app bundle
@@ -50,8 +50,8 @@ jobs:
           test -d "$APP"
           ls -la "$APP"
           lipo -info "$APP/NomoClone"
-          echo "--- embedded resources ---"
-          ls "$APP" | grep -Ei 'metallib|dat|jpg' || true
+          echo "--- metallib present? ---"
+          ls -la "$APP" | grep -i metallib || echo "NO METALLIB"
           du -sh "$APP"
 
       - name: Package unsigned IPA
@@ -60,7 +60,6 @@ jobs:
           rm -rf Payload out
           mkdir -p Payload out
           cp -R "$APP" Payload/
-          # an unsigned IPA only needs Payload/<name>.app; sideloaders re-sign it
           zip -qry out/NomoClone-unsigned.ipa Payload
           shasum -a 256 out/NomoClone-unsigned.ipa | tee out/SHA256.txt
           ls -lh out
