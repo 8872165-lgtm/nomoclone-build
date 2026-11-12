@@ -46,7 +46,7 @@ enum PhotoLibrary {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { _ in }
     }
 
-    static func save(_ image: UIImage, completion: @escaping (Error?) -> Void) {
+    static func save(_ image: UIImage, completion: @escaping @Sendable (Bool, Error?) -> Void) {
         PHPhotoLibrary.shared().performChanges({
             PHAssetChangeRequest.creationRequestForAsset(from: image)
         }, completionHandler: completion)

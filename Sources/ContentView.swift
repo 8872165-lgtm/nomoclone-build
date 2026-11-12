@@ -257,17 +257,17 @@ struct MetalPreview: UIViewRepresentable {
             var img = CIImage(mtlTexture: out, options: [
                 .colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!
             ])
-            if let ci = img {
-                let sx = CGFloat(drawable.width) / ci.extent.width
-                let sy = CGFloat(drawable.height) / ci.extent.height
+            let dw = CGFloat(drawable.texture.width)
+            let dh = CGFloat(drawable.texture.height)
+            if let ci = img, ci.extent.width > 0, ci.extent.height > 0 {
+                let sx = dw / ci.extent.width
+                let sy = dh / ci.extent.height
                 img = ci.transformed(by: CGAffineTransform(scaleX: sx, y: sy))
             }
             guard let final = img else { return }
             ciContext.render(final, to: drawable.texture,
                              commandBuffer: nil,
-                             bounds: CGRect(x: 0, y: 0,
-                                            width: drawable.width,
-                                            height: drawable.height),
+                             bounds: CGRect(x: 0, y: 0, width: dw, height: dh),
                              colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
             drawable.present()
         }
@@ -347,7 +347,7 @@ struct EditorView: View {
 
     private func save() {
         let full = StillRenderer.shared.render(uiImage: image) ?? image
-        PhotoLibrary.save(full) { _ in dismiss() }
+        PhotoLibrary.save(full) { _, _ in dismiss() }
     }
 
     private func downsample(_ img: UIImage, maxEdge: CGFloat) -> UIImage? {
