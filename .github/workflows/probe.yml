@@ -1,0 +1,28 @@
+name: probe
+on:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          echo "windows ok"
+          $PSVersionTable.OS
+
+  mac-intel-26:
+    runs-on: macos-26-intel
+    timeout-minutes: 5
+    steps:
+      - run: |
+          sw_vers
+          uname -m
+
+  mac-intel-15:
+    runs-on: macos-15-intel
+    timeout-minutes: 5
+    steps:
+      - run: |
+          sw_vers
+          uname -m
