@@ -1,0 +1,55 @@
+name: NomoClone
+options:
+  bundleIdPrefix: com.nomoclone
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_BITCODE: NO
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+
+targets:
+  NomoClone:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+        buildPhase: resources
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: NomoClone
+        UILaunchScreen: {}
+        UIRequiredDeviceCapabilities: [arm64, metal]
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSCameraUsageDescription: NomoClone uses the camera to shoot photos with film looks.
+        NSPhotoLibraryAddUsageDescription: NomoClone saves rendered photos to your library.
+        NSPhotoLibraryUsageDescription: NomoClone reads photos you pick for grading.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nomoclone.app
+        TARGETED_DEVICE_FAMILY: "1,2"
+        MTL_ENABLE_DEBUG_INFO: NO
+        MTL_FAST_MATH: YES
+        SWIFT_OPTIMIZATION_LEVEL: "-O"
+    dependencies:
+      - sdk: Metal.framework
+      - sdk: MetalKit.framework
+      - sdk: AVFoundation.framework
+      - sdk: Photos.framework
+      - sdk: CoreImage.framework
+
+schemes:
+  NomoClone:
+    build:
+      targets:
+        NomoClone: all
+    run:
+      config: Debug

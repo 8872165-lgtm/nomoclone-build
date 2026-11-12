@@ -1,0 +1,82 @@
+name: build-ipa
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          sw_vers
+
+      - name: Install xcodegen
+        run: |
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+          xcodegen --version
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Build (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project NomoClone.xcodeproj \
+            -scheme NomoClone \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            ENABLE_BITCODE=NO \
+            build 2>&1 | tee xcodebuild.log
+
+      - name: Verify app bundle
+        run: |
+          APP=build/Build/Products/Release-iphoneos/NomoClone.app
+          test -d "$APP"
+          ls -la "$APP"
+          lipo -info "$APP/NomoClone"
+          echo "--- embedded resources ---"
+          ls "$APP" | grep -Ei 'metallib|dat|jpg' || true
+          du -sh "$APP"
+
+      - name: Package unsigned IPA
+        run: |
+          APP=build/Build/Products/Release-iphoneos/NomoClone.app
+          rm -rf Payload out
+          mkdir -p Payload out
+          cp -R "$APP" Payload/
+          # an unsigned IPA only needs Payload/<name>.app; sideloaders re-sign it
+          zip -qry out/NomoClone-unsigned.ipa Payload
+          shasum -a 256 out/NomoClone-unsigned.ipa | tee out/SHA256.txt
+          ls -lh out
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: NomoClone-unsigned-ipa
+          path: out/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: xcodebuild.log
+          retention-days: 14

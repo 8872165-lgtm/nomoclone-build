@@ -1,0 +1,10 @@
+build/
+DerivedData/
+*.xcarchive
+*.ipa
+Payload/
+out/
+xcodebuild.log
+.DS_Store
+xcuserdata/
+*.xcodeproj
